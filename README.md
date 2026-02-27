@@ -92,9 +92,9 @@ Responsibilities:
 
 - Maintain local database:
 
--- Command history
+- - Command history
 
--- Ignored warnings
+- - Ignored warnings
 
 - Schedule periodic audits
 
