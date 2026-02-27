@@ -28,3 +28,38 @@ Detects breaking updates before you upgrade by correlating:
 - Upcoming updates
 
 - Official Arch News warnings
+
+## Core Idea: Pre-Emptive Audit
+
+ArchAngel doesn’t wait for your system to break.
+
+Example:
+
+```
+“NVIDIA 550 is scheduled for update.
+Arch News reports this version breaks KDE Plasma on some systems.
+Recommendation: delay update or pin version.”
+```
+
+This proactive behavior is the project’s key innovation.
+
+## Architecture Overview
+
+ArchAngel follows a Multi-Agent System design.
+Each component is lightweight, isolated, and communicates over local REST APIs.
+```
++--------------------+
+|  Textual TUI       |
+|  (Python)          |
++---------+----------+
+          |
+          v
++--------------------+        +------------------------+
+|  AI Brain          | <----> |  State Manager         |
+|  Python + FastAPI  |  REST  |  Java (Quarkus/Spring) |
++---------+----------+        +-----------+------------+
+          |                               |
+          v                               v
+     Ollama (Llama-3)              Arch News RSS
+```
+
