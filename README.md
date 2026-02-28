@@ -124,7 +124,7 @@ Responsibilities:
 
 ## License
 
-GNU GPL v3
+GNU GPL v2
 
 This project is free software.
 You are free to use, study, modify, and distribute it—under the same license.
