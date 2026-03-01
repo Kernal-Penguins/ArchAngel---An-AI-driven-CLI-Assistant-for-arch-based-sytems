@@ -3,7 +3,6 @@ package org.archangel.api;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
-
 import org.archangel.model.CommandResponse;
 import org.archangel.system.CommandService;
 
