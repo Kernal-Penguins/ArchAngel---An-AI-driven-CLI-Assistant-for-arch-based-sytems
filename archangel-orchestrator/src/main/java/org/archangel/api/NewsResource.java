@@ -7,6 +7,8 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import org.archangel.model.NewsItem;
 import org.archangel.rss.ArchNewsFetcher;
+import org.archangel.scheduler.NewsScheduler;
+import org.archangel.state.NewsCacheService;
 
 import java.util.List;
 
@@ -14,11 +16,11 @@ import java.util.List;
 public class NewsResource
 {
   @Inject
-   ArchNewsFetcher archNewsFetcher;
+  NewsCacheService newsCacheService;
   @GET
     @Produces(MediaType.APPLICATION_JSON)
     public List<NewsItem> getNews() throws Exception
     {
-        return archNewsFetcher.fetchRSSNews();
+        return newsCacheService.getNews();
     }
 }
