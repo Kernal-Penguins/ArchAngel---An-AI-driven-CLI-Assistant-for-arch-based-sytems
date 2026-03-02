@@ -17,6 +17,6 @@ public class NewsCacheService
 
     public synchronized List<NewsItem> getNews()
     {
-        return cachedNews;
+        return new ArrayList<>(cachedNews) ;
     }
 }
