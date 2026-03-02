@@ -12,5 +12,8 @@ public class AllowedCommands
             "whoami",
             "hostname"
     );
-    public boolean isAllowed
+    public static boolean isAllowed(String Command)
+    {
+        return Safe_Commands.contains(Command);
+    }
 }

@@ -1,40 +1,48 @@
 package org.archangel.system;
 
-import io.vertx.core.spi.launcher.Command;
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import org.archangel.model.CommandResponse;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.util.List;
 
 @ApplicationScoped
-public class CommandService
-{
+public class CommandService {
 
+    @Inject
+    SystemProcessExec systemProcessExec;
 
     public CommandResponse executeCommand(String command) {
-        try{
-        ProcessBuilder processBuilder = new ProcessBuilder("bash", "-c",  command);
 
-        Process process = processBuilder.start();
-        BufferedReader stdOut = new BufferedReader(new InputStreamReader(process.getInputStream()));
-        BufferedReader stdErr = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+        if (command == null || command.isBlank()) {
+            return new CommandResponse(command, -1, "", "Command cannot be empty");
+        }
+        command = command.trim();
+        if (command.contains("|") ||
+                command.contains("&") ||
+                command.contains(";") ||
+                command.contains(">") ||
+                command.contains("<")) {
 
-        StringBuilder out = new StringBuilder();
-        StringBuilder err = new StringBuilder();
-        String line;
-        while((line = stdOut.readLine()) != null){
-            out.append(line).append("\n");
+            return new CommandResponse(command, -1, "",
+                    "Chained or redirected commands are not allowed");
         }
-        while((line = stdErr.readLine()) != null){
-            err.append(line).append("\n");
+        if (!AllowedCommands.isAllowed(command)) {
+            return new CommandResponse(command, -1, "", "Command not allowed");
         }
-        int exitCode = process.waitFor();
-        return new CommandResponse(command,exitCode,out.toString(),err.toString());
-    }catch (Exception e)
-        {
-            return new CommandResponse(command, -1, "", e.getMessage());
+        List<String> parts = List.of(command.split("\\s+"));
+
+        ProcessResult  result = systemProcessExec.execute(parts);
+
+        if (result.isTimedOut()) {
+            return new CommandResponse(command, -1, "", "Command timed out");
         }
+
+        return new CommandResponse(
+                command,
+                result.getExitCode(),
+                result.getStdout(),
+                result.getStderr()
+        );
     }
 }
