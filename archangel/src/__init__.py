@@ -3,6 +3,9 @@ import httpx
 
 app = typer.Typer()
 
+JAVA_RSS_URL = "http://127.0.0.1:9090/news"
+JAVA_SYSTEM_URL = "http://127.0.0.1:9090/system/execute"
+
 @app.callback()
 def callback():
     """
@@ -34,16 +37,14 @@ def scan_conf():
 
 @app.command()
 def archnews():
-    FASTAPI_BASE_URL = "http://localhost:8000"
     """
     Fetches and displays the latest Arch news from the ArchAngel service
     """
     try:
         typer.echo("Fetching news...")
         with httpx.Client(timeout=10) as client:
-            r = client.get(f"{FASTAPI_BASE_URL}/archnews")
+            r = client.get(JAVA_RSS_URL)
             typer.echo(f"Status: {r.status_code}")
-            typer.echo(f"Raw response: {r.text}")
             r.raise_for_status()
             news_items = r.json()
 
@@ -78,5 +79,36 @@ def archnews():
         )
         raise typer.Exit(code=1)
 
-if __name__ == "__main__":   # <-- this was missing
+@app.command()
+@app.command()
+def systeminfo():
+    '''Fetches info about your system'''
+    try:
+        typer.echo("Fetching data...")
+        with httpx.Client(timeout=10) as client:
+            r = client.post(
+                JAVA_SYSTEM_URL,
+                content="uname -a",                        
+                headers={"Content-Type": "text/plain"}
+            )
+            r.raise_for_status()
+            response = r.json()                            
+
+        exit_code = response.get("exitCode")
+        stdout    = response.get("stdout", "")
+        stderr    = response.get("stderr", "")
+
+        if exit_code != 0:
+            typer.echo(typer.style(f"Error: {stderr}", fg=typer.colors.RED), err=True)
+            raise typer.Exit(code=1)
+
+        typer.echo(typer.style("\n=== System Info ===\n", fg=typer.colors.CYAN, bold=True))
+        typer.echo(stdout)
+
+    except httpx.ConnectError:
+        typer.echo(typer.style("Error: Could not connect to ArchAngel service. Is it running?", fg=typer.colors.RED), err=True)
+        raise typer.Exit(code=1)
+        
+
+if __name__ == "__main__":
     app()
