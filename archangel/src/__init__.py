@@ -1,5 +1,6 @@
 import typer
 import httpx
+from ollama import chat
 
 app = typer.Typer()
 
@@ -143,6 +144,9 @@ def get_status():
 
 @app.command()
 def get_incidents():
+    '''
+        Fetches any incidents that occur.
+    '''
     try:
         with httpx.Client() as client:
             r = client.get(f"{JAVA_SYSTEM_URL}/incidents")
@@ -169,6 +173,69 @@ def get_incidents():
         )
         raise typer.Exit(code=1)
 
+def chat_with_ollama(prompt: str, model="qwen3.5:9b") -> str:
+    try:
+        messages = [{"role": "user", "content": prompt}]
+        result = chat(model=model, messages=messages)
+        return result['message']['content']
+    except Exception as e:
+        typer.echo(typer.style(f"Ollama error: {e}", fg=typer.colors.RED), err=True)
+        return ""
+
+@app.command()
+def summary():
+    '''
+    Shows you the summary of the problems that occured in you setup, their severity and what you should do to deal with them
+    '''
+    try:
+        with httpx.Client(timeout=10) as client:
+            r = client.post(
+                f"{JAVA_SYSTEM_URL}/execute",
+                content="journalctl -n 50", 
+                headers={"Content-Type": "text/plain"}
+            )
+            r.raise_for_status()
+            system_data = r.json()
+
+        
+        logs = system_data.get("stdout", "")
+        hostname = system_data.get("hostname", "unknown") 
+        timestamp = system_data.get("timestamp", "")
+
+        if not logs:
+            typer.echo("No logs retrieved.")
+            raise typer.Exit()
+
+        prompt = f"""
+You are a Linux system assistant. Analyze the following logs and provide:
+- Severity (LOW/MEDIUM/HIGH/CRITICAL)
+- Summary of what went wrong
+- Recommended action
+
+Hostname: {hostname}
+Timestamp: {timestamp}
+Logs:
+{logs}
+        """
+
+        typer.echo("Analyzing logs...")
+        ai_response = chat_with_ollama(prompt)
+
+        typer.echo(typer.style("\n=== Recommended Action ===\n", fg=typer.colors.CYAN, bold=True))
+        typer.echo(ai_response)
+
+    except httpx.ConnectError:
+        typer.echo(
+            typer.style("Error: Could not connect to ArchAngel service. Is it running?", fg=typer.colors.RED),
+            err=True,
+        )
+        raise typer.Exit(code=1)
+    except httpx.HTTPStatusError as e:
+        typer.echo(
+            typer.style(f"Error: Service returned {e.response.status_code}", fg=typer.colors.RED),
+            err=True,
+        )
+        raise typer.Exit(code=1)
 
 if __name__ == "__main__":
     app()
