@@ -79,7 +79,7 @@ def archnews():
         )
         raise typer.Exit(code=1)
 
-@app.command()
+
 @app.command()
 def systeminfo():
     '''Fetches info about your system'''
