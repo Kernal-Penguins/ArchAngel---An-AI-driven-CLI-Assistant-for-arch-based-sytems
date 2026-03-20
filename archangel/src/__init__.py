@@ -175,14 +175,15 @@ def get_incidents():
         )
         raise typer.Exit(code=1)
 
-def chat_with_ollama(prompt: str, model="qwen3.5:9b") -> str:
-    try:
-        messages = [{"role": "user", "content": prompt}]
-        result = chat(model=model, messages=messages)
-        return result['message']['content']
-    except Exception as e:
-        typer.echo(typer.style(f"Ollama error: {e}", fg=typer.colors.RED), err=True)
-        return ""
+def chat_with_ollama(prompt: str, model="qwen3.5:9b"):
+    stream = chat(
+        model=model,
+        messages=[{"role": "user", "content": prompt}],
+        stream=True
+    )
+    for chunk in stream:
+        print(chunk['message']['content'], end="", flush=True)
+    print()
 
 @app.command()
 def summary():
@@ -209,8 +210,8 @@ def summary():
             raise typer.Exit()
 
         prompt = f"""
-You are a Linux system assistant. Analyze the following logs and provide:
-- Severity (LOW/MEDIUM/HIGH/CRITICAL)
+You are a Linux system assistant mainly for arch linux and related systems. Analyze the following logs and provide:
+- Severity of specific logs(LOW/MEDIUM/HIGH/CRITICAL)
 - Summary of what went wrong
 - Recommended action
 
@@ -260,6 +261,9 @@ def config_scan():
 
         for root, dirs, files in os.walk(os.path.expanduser("~/.config/hypr")):
             for file in files:
+                with open(os.path.join(root, file),"r") as f:
+                    content = f.read()
+                    print(content)
                 print(os.path.join(root, file))
 
 if __name__ == "__main__":
