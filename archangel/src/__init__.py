@@ -12,6 +12,7 @@ app = typer.Typer()
 JAVA_RSS_URL = "http://127.0.0.1:9090/news"
 JAVA_SYSTEM_URL = "http://127.0.0.1:9090/system"
 model = "qwen3.5:9b"
+API_KEY = "dev-secret-key"
 
 @app.callback()
 def callback():
@@ -96,7 +97,7 @@ def exec():
             r = client.post(
                 f"{JAVA_SYSTEM_URL}/execute",
                 content="uname -a",                        
-                headers={"Content-Type": "text/plain"}
+                headers={"Content-Type": "text/plain", "X-Api-Key": API_KEY}
             )
             r.raise_for_status()
             response = r.json()                            
@@ -123,7 +124,9 @@ def get_status():
     '''
     try:
         with httpx.Client() as client:
-            r = client.get(f"{JAVA_SYSTEM_URL}/status")
+            r = client.get(f"{JAVA_SYSTEM_URL}/status",
+            headers={"X-Api-Key": API_KEY}
+            )
             typer.echo(f"Status: {r.status_code}")
             r.raise_for_status()
             system_info = r.json()
@@ -155,7 +158,9 @@ def get_incidents():
     '''
     try:
         with httpx.Client() as client:
-            r = client.get(f"{JAVA_SYSTEM_URL}/incidents")
+            r = client.get(f"{JAVA_SYSTEM_URL}/incidents",
+            headers={"X-Api-Key": API_KEY}
+            )
             r.raise_for_status()
             typer.echo(f"Status: {r.status_code}")
             incidents = r.json()
@@ -221,7 +226,7 @@ def summary():
             r = client.post(
                 f"{JAVA_SYSTEM_URL}/execute",
                 content="journalctl -n 50", 
-                headers={"Content-Type": "text/plain"}
+                headers={"Content-Type": "text/plain", "X-Api-Key": API_KEY}
             )
             r.raise_for_status()
             system_data = r.json()
@@ -269,39 +274,106 @@ Logs:
 @app.command()
 def config_scan():
     '''
-        Scans your config files for any problems.
+    Scans your Hyprland config files for any problems via the ArchAngel brain service.
     '''
     env = questionary.select(
         "Do you use Hyprland?",
-        choices=[
-            "Yes",
-            "No"
-        ]
+        choices=["Yes", "No"]
     ).ask()
 
-    typer.echo(f"You selected: {env}")
+    if env != "Yes":
+        typer.echo("Only Hyprland config scanning is supported right now.")
+        raise typer.Exit()
 
-    if env == "Yes":
-        prompt = ""
-        content = ""
-        typer.echo(f"Okay please wait while {model} processes your config. This may take a while....")
-        for root, dirs, files in os.walk(os.path.expanduser("~/.config/hypr")):
-            for file in files:
-                with open(os.path.join(root, file),"r") as f:
-                    content = f.read()
-                    prompt = f'''
-You are a linux assistant, check these hyprland config file for the user and let them know if anything breaks the system. Return
-- The line which is broken or may break in certain conditions (If any)
-- Recommended action
-- If no such line exists then return "no such problems" as fast as you can
-The config file is {file} and it's content is as follows:-
-{content}
-'''
-                    typer.echo( 
-                    typer.style(f"\n===For {file} ===\n", fg=typer.colors.CYAN , bold= True)
+    typer.echo("Checking system logs for problems first...")
+
+    try:
+        with httpx.Client(timeout=60) as client:
+            r = client.post(
+                f"{JAVA_SYSTEM_URL}/analyze",
+                headers={"X-Api-Key": API_KEY}
+            )
+
+            # No logs available
+            if r.status_code == 204:
+                typer.echo("No logs available to analyze. Skipping config scan.")
+                raise typer.Exit()
+
+            r.raise_for_status()
+            analysis = r.json()
+
+        # Check if the brain flagged any problems
+        analysis_text = analysis.get("content", "").lower()
+        if not analysis_text or "no problems" in analysis_text or "no issues" in analysis_text:
+            typer.echo(
+                typer.style("✔ No problems detected in system logs. Config scan skipped.", fg=typer.colors.GREEN)
+            )
+            raise typer.Exit()
+
+        typer.echo(
+            typer.style("⚠ Problems detected in logs. Scanning Hyprland config files...", fg=typer.colors.YELLOW)
+        )
+        typer.echo(f"\nLog analysis summary:\n{analysis.get('content')}\n")
+
+    except httpx.ConnectError:
+        typer.echo(
+            typer.style("Error: Could not connect to ArchAngel service. Is it running?", fg=typer.colors.RED),
+            err=True,
+        )
+        raise typer.Exit(code=1)
+    except httpx.HTTPStatusError as e:
+        typer.echo(
+            typer.style(f"Error: Service returned {e.response.status_code}", fg=typer.colors.RED),
+            err=True,
+        )
+        raise typer.Exit(code=1)
+
+    # Only reached if problems were found in logs
+    hypr_path = os.path.expanduser("~/.config/hypr")
+    found_any = False
+
+    for root, dirs, files in os.walk(hypr_path):
+        for file in files:
+            filepath = os.path.join(root, file)
+
+            with open(filepath, "r") as f:
+                content = f.read()
+
+            try:
+                with httpx.Client(timeout=120) as client:
+                    r = client.post(
+                        f"{JAVA_SYSTEM_URL}/analyze-config",
+                        content=content,
+                        headers={
+                            "X-Api-Key": API_KEY,
+                            "Content-Type": "text/plain"
+                        }
                     )
-                    ai_response = chat_with_ollama(prompt)
-                    typer.echo(ai_response)
+                    r.raise_for_status()
+                    result = r.json()
+                    result_text = result.get("content", "")
+
+                    # Only print files that actually have problems
+                    if "no problems" in result_text.lower() or "no such problems" in result_text.lower():
+                        continue
+
+                    found_any = True
+                    typer.echo(
+                        typer.style(f"\n=== {file} ===\n", fg=typer.colors.CYAN, bold=True)
+                    )
+                    typer.echo(result_text)
+
+            except httpx.HTTPStatusError as e:
+                typer.echo(
+                    typer.style(f"Error processing {file}: {e.response.status_code}", fg=typer.colors.RED),
+                    err=True,
+                )
+
+    if not found_any:
+        typer.echo(
+            typer.style("\n✔ No config issues found across all Hyprland files.", fg=typer.colors.GREEN)
+        )
+
 
 if __name__ == "__main__":
     app()
