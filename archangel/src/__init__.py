@@ -149,7 +149,7 @@ def get_incidents():
         Fetches any incidents that occur.
     '''
     try:
-        with httpx.Client() as client:
+        with httpx.Client(timeout=20) as client:
             r = client.get(f"{JAVA_SYSTEM_URL}/incidents",
             headers={"X-Api-Key": API_KEY}
             )
@@ -328,8 +328,12 @@ def config_scan():
         for file in files:
             filepath = os.path.join(root, file)
 
-            with open(filepath, "r") as f:
-                content = f.read()
+            try:
+                with open(filepath, "r") as f:
+                    content = f.read()
+            except (OSError, UnicodeDecodeError) as e:
+                typer.echo(typer.style(f"Skipping {file}: {e}", fg=typer.colors.YELLOW))
+                continue
 
             try:
                 with httpx.Client(timeout=120) as client:
