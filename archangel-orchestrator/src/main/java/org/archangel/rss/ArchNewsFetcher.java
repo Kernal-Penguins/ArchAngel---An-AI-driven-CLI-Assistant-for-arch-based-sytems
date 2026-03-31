@@ -21,20 +21,6 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * FIXED:
- * 1. XXE vulnerability: DocumentBuilderFactory now has XXE protections applied.
- *    An attacker controlling the RSS feed (MITM or DNS spoof) could previously
- *    use XML External Entity injection to read local files (e.g., /etc/passwd).
- *
- * 2. HttpClient is now a singleton initialized in @PostConstruct instead of
- *    being recreated on every fetchRSSNews() call (every 10 minutes).
- *    HttpClient holds a thread pool and connection pool internally — recreating
- *    it repeatedly leaks threads and connections over time.
- *
- * 3. Added connection and request timeouts to HttpClient to prevent the scheduler
- *    thread from hanging indefinitely if archlinux.org is slow or unreachable.
- */
 @ApplicationScoped
 public class ArchNewsFetcher {
 

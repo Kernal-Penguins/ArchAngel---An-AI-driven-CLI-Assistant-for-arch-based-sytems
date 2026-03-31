@@ -7,18 +7,6 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * FIXED:
- * 1. Added lastSuccessfulFetch timestamp — previously the cache had no concept of
- *    staleness. After an RSS failure the cache silently served week-old data with
- *    no indication to the caller that the data was stale.
- *
- * 2. isStale() exposed so NewsResource and the scheduler can surface cache age
- *    in API responses (via a custom header or response wrapper).
- *
- * 3. consecutiveFailures counter — allows the scheduler to escalate alerts
- *    after N consecutive RSS fetch failures rather than silently swallowing them.
- */
 @ApplicationScoped
 public class NewsCacheService {
 

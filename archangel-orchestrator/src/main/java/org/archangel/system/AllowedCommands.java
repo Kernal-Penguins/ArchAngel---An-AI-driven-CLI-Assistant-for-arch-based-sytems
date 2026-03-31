@@ -2,20 +2,6 @@ package org.archangel.system;
 
 import java.util.Set;
 
-/**
- * FIXED: Added journalctl commands required by SystemLogService and the /analyze flow.
- *
- * ORIGINAL BUG: summary() in the CLI sent "journalctl -n 50" to /system/execute,
- * which was not in Safe_Commands — the command was silently rejected with exitCode=-1,
- * causing summary() to always fail with no useful error message.
- *
- * Also fixed: Java naming convention. Class and constant names corrected.
- *
- * NOTE ON SECURITY: This allowlist is a defense-in-depth layer, not the primary
- * security boundary. The primary boundary is that /system/execute must never be
- * exposed outside localhost. These commands are all read-only and produce no
- * side effects on the system.
- */
 public final class AllowedCommands {
 
     private AllowedCommands() {}

@@ -14,9 +14,6 @@ public class SystemLogService {
     @Inject
     SystemProcessExec systemProcessExec;
 
-    // FIXED: This method was defined but never called by any scheduler or endpoint.
-    // It is now invoked by SystemResource.analyzeLogs() and SystemResource.getIncidents().
-    //
     // Fetches priority 3–5 (err, warning, notice) last 50 lines.
     // This is the correct command to get actionable log entries without flooding
     // the AI with debug/info noise.

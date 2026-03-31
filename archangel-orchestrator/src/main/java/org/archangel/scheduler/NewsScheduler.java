@@ -7,17 +7,7 @@ import org.archangel.rss.ArchNewsFetcher;
 import org.archangel.state.NewsCacheService;
 import org.jboss.logging.Logger;
 
-/**
- * FIXED:
- * 1. recordFetchFailure() now called on error so NewsCacheService can track
- *    consecutive failures and callers can know the cache is degraded.
- *
- * 2. Escalating log level: after 3 consecutive failures, log at ERROR instead
- *    of INFO so monitoring systems (journald, log shippers) can alert on it.
- *
- * 3. Scheduler interval moved to config property — hardcoded "10m" made it
- *    impossible to tune without recompiling.
- */
+
 @ApplicationScoped
 public class NewsScheduler {
 

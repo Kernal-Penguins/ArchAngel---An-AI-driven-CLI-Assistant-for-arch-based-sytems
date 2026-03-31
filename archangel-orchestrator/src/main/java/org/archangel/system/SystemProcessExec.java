@@ -7,22 +7,6 @@ import java.io.InputStreamReader;
 import java.util.List;
 import java.util.concurrent.*;
 
-/**
- * FIXED: Critical deadlock resolved.
- *
- * ORIGINAL BUG: process.waitFor() was called BEFORE reading stdout/stderr.
- * If the process wrote more output than the OS pipe buffer (~64KB on Linux),
- * the process blocked waiting for the buffer to drain.
- * Java blocked in waitFor() waiting for the process to finish.
- * Deadlock. Process never exits. waitFor() times out and kills the process.
- *
- * FIX: stdout and stderr are drained concurrently by two reader threads
- * submitted to an executor BEFORE waitFor() is called. This matches the
- * standard Java process-reading pattern for production use.
- *
- * Also fixed: stream readers were previously opened AFTER waitFor() returned,
- * meaning output was read from an already-closed process — unreliable on some JVMs.
- */
 @ApplicationScoped
 public class SystemProcessExec {
 
