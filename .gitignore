@@ -7,6 +7,7 @@ venv/
 
 pkg/
 *.tar.gz
+archangel_cli.egg-info/
 =======
 # Java
 target/
