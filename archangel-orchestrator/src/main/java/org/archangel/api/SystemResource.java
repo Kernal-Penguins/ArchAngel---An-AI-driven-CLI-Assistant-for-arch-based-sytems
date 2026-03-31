@@ -19,30 +19,6 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
-/**
- * FIXED:
- * 1. @ApplicationScoped added — required for CDI injection to work correctly in
- *    all Quarkus deployment modes.
- *
- * 2. POST /system/analyze: was returning Response.status(NO_CONTENT).entity(...)
- *    which is invalid HTTP — 204 No Content must not have a body. The response body
- *    was silently dropped by HTTP clients. Changed to 200 with a clear message body
- *    when no logs are available.
- *
- * 3. POST /system/analyze / GET /system/incidents: when the brain service is down
- *    the fallback GeneratedResponse comes back with severity=UNKNOWN and a generic
- *    message, giving the operator no hint about the real cause. Added a /system/health
- *    endpoint that checks both the log pipeline and the brain service reachability,
- *    so the operator knows which component to fix.
- *
- * 4. GET /system/incidents: the TODO comment tracking persistence is preserved.
- *
- * The real cause of the UNKNOWN severity in the Swagger screenshot is that the
- * archangel-brain service (Ollama) is unreachable — LogicInterface @CircuitBreaker
- * opens and @Fallback fires, returning the degraded response. Fix: ensure
- * archangel-brain is running (`systemctl start archangel-brain`) and that
- * quarkus.rest-client.logic-api.url is correctly configured in application.properties.
- */
 @Path("/system")
 @Produces(MediaType.APPLICATION_JSON)
 @ApplicationScoped

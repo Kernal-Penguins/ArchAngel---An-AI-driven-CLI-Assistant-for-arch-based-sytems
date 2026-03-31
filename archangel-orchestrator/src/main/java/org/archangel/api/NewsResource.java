@@ -12,26 +12,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * FIXED:
- * 1. @ApplicationScoped added — CDI cannot inject NewsCacheService into this bean
- *    without a declared scope. Without it, a new unmanaged instance is created per
- *    request (dependent scope), and injected fields may not be properly initialised
- *    in all Quarkus deployment modes.
- *
- * 2. Returns a proper Response object so we can attach cache staleness headers.
- *    Previously the CLI had no way to know it was receiving stale data.
- *
- * 3. Returns 503 with a clear message when the cache is empty (cold start),
- *    instead of silently returning [] which the CLI would display as "No news items
- *    found" — confusing to the user.
- *
- * 4. X-Cache-Stale header: CLI can check this and show a warning like
- *    "[WARNING: news data may be stale]" without polling the server.
- *
- * 5. @Produces annotation was missing from the original, relying on Quarkus
- *    default content negotiation which can return XML in some clients.
- */
+
 @Path("/news")
 @Produces(MediaType.APPLICATION_JSON)
 @ApplicationScoped
