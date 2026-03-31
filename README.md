@@ -88,7 +88,7 @@ Install the qwen2.5:3b model from https://ollama.com/library/qwen2.5
 
 Framework: FastAPI
 
-LLM Backend: Ollama (Llama-3-8B)
+LLM Backend: Ollama qwen2.5:3b
 
 Responsibilities:
 
