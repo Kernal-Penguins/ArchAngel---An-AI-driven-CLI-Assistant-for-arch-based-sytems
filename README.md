@@ -91,10 +91,10 @@ Analyzing recent journal entries...
 
 ---
 
-<div align="left">
 
 ## 💻️ Video Demo
 
+<div align="center">
 <img src="Demo.gif" width="600"/>
 
 <br><br>
