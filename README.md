@@ -1,5 +1,10 @@
 # ArchAngel--A-Unified-AI-Driven-Linux-System-Assistant-for-Arch-Based-Systems
 
+<div align="center">
+  <img src="ArchAngel.png" width="400">
+</div>
+---
+
 ## ArchAngel 
 
 A Unified AI-Driven Linux System Assistant for Arch-Based Systems
@@ -43,6 +48,11 @@ Recommendation: delay update or pin version.”
 
 This proactive behavior is the project’s key innovation.
 
+---
+## Video Showcase
+
+
+---
 ## Architecture Overview
 
 ArchAngel follows a Multi-Agent System design.
