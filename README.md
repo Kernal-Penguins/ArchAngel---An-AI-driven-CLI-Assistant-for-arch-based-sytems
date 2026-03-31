@@ -93,7 +93,7 @@ Analyzing recent journal entries...
 
 ## 💻️ Video Demo
 
-<iframe src="Demo.mp4" /> 
+<iframe src="Demo.mp4"> </iframe> 
 
 ## 🏗️ Architecture
 
