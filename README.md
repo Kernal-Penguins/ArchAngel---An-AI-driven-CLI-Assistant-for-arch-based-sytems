@@ -93,7 +93,7 @@ Analyzing recent journal entries...
 
 ## 💻️ Video Demo
 
-<vid src="Demo.mp4"></vid> 
+[▶️ Watch Demo](./Demo.mp4)
 
 ## 🏗️ Architecture
 
