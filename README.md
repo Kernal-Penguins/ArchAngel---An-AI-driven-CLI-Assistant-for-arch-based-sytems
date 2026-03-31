@@ -215,13 +215,6 @@ cd Archangel-aur
 makepkg -si
 ```
 
-Or with an AUR helper:
-```bash
-yay -S archangel-cli
-# or
-paru -S archangel-cli
-```
-
 > If `archangel` is not found after install, run: `pipx ensurepath` and restart your shell.
 
 ### Step 2 — Install the Java Daemon
